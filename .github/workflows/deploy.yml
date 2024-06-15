@@ -1,0 +1,23 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # 触发部署的分支，根据实际情况修改
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build and deploy
+        if: success() # 确保之前的步骤成功
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages # 部署的目标分支
+          folder: dist # 你构建输出的静态文件所在目录，根据实际情况修改
+          clean: true # 是否在部署前清理目标分支，默认为true
+          token: ${{ secrets.GITHUB_TOKEN }} # 使用GitHub提供的Token，对于公开仓库足够
