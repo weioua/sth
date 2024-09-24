@@ -1,11 +1,87 @@
+<!-- ks扫码器1.0-2024年9月23日 -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="wih">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>KiSecure Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- <script src="./html5-qrcode.min.js"></script> -->
+    <link rel="shortcut icon" href="data:image/png;base64,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">
 </head>
-<body>
-    <h1>hello</h1>
+
+<body class="text-bg">
+    <h3 id="startScan">使用KiSecure进行扫描获取验证码</h3>
+    <div id="btm">KiSecure © wn2024</div>
 </body>
+<script>
+    let flag = 0;
+    let startScan = document.getElementById('startScan');
+    const qrReader = new Html5Qrcode("startScan");// 显示摄像头预览
+    const config = { fps: 240, qrbox: 260, aspectRatio: 1 };// 配置参数 
+
+    startScan.onclick = function () {
+        if (!flag) {
+            startScan.style.width = '260px';
+            startScan.style.height = '260px';
+            startScan.style.borderRadius = '12px';
+            startScan.innerText = '请授权';
+            flag = 1;
+            qrReader.start({ facingMode: "environment" }, config, (decodedText, decodedResult) => {
+                qrReader.stop().then((ignore) => {
+                    // console.log('scan->' + decodedText);
+                    startScan.style.width = '92%';
+                    startScan.style.height = '5em';
+                    startScan.style.borderRadius = '12px';
+                    startScan.innerText = '扫码结果：' + decodedText;
+                    flag = 0;
+                }).catch((err) => {
+                });
+            }, (errorMessage) => {
+            });
+        }
+    }
+</script>
+
+<style>
+    body {
+        margin: 0;
+        display: flex;
+        height: 100vh;
+        align-items: center;
+        justify-content: center;
+        background-image: linear-gradient(10deg, #004080, #fff);
+    }
+
+    #startScan {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 12px;
+        border: none;
+        width: 92%;
+        height: 5em;
+        margin: 1em auto;
+        background: rgb(220, 220, 220);
+        transition: all 0.3s;
+    }
+
+    #btm {
+        position: fixed;
+        bottom: 0;
+        text-align: center;
+        color: rgb(185, 185, 185);
+        font-size: 0.5em;
+    }
+
+    video {
+        border-radius: 10px;
+    }
+
+    #qr-shaded-region {
+        border: none !important;
+    }
+</style>
+
 </html>
