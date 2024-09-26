@@ -13,13 +13,13 @@
 
 <body class="text-bg">
     <h3 id="startScan">使用KiSecure进行扫描获取验证码</h3>
-    <div id="btm">KiSecure © wn2024</div>
+    <div id="btm">KiSecure 1.0 © wn2024</div>
 </body>
 <script>
     let flag = 0;
     let startScan = document.getElementById('startScan');
     const qrReader = new Html5Qrcode("startScan");// 显示摄像头预览
-    const config = { fps: 240, qrbox: 260, aspectRatio: 1 };// 配置参数 
+    const config = { fps: 30, qrbox: 260, aspectRatio: 1 };// 配置参数 
 
     startScan.onclick = function () {
         if (!flag) {
