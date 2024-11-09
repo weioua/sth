@@ -1,87 +1,30 @@
-<!-- ks扫码器1.0-2024年9月23日 -->
 <!DOCTYPE html>
-<html lang="wih">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KiSecure Scanner</title>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <!-- <script src="./html5-qrcode.min.js"></script> -->
+    <title>KiSecure</title>
     <link rel="shortcut icon" href="./icon.png">
 </head>
+<body>
+<h1>KiSecure</h1>
+<button onclick="location.href='./ks_scanner.html'">QRC scanner</button>
+<button onclick="location.href='./ks_otp.html'">OTP code</button>
 
-<body class="text-bg">
-    <h3 id="startScan">使用KiSecure进行扫描获取验证码</h3>
-    <div id="btm">KiSecure 1.0 © wn2024</div>
 </body>
-<script>
-    let flag = 0;
-    let startScan = document.getElementById('startScan');
-    const qrReader = new Html5Qrcode("startScan");// 显示摄像头预览
-    const config = { fps: 30, qrbox: 260, aspectRatio: 1 };// 配置参数 
-
-    startScan.onclick = function () {
-        if (!flag) {
-            startScan.style.width = '260px';
-            startScan.style.height = '260px';
-            startScan.style.borderRadius = '12px';
-            startScan.innerText = '请授权';
-            flag = 1;
-            qrReader.start({ facingMode: "environment" }, config, (decodedText, decodedResult) => {
-                qrReader.stop().then((ignore) => {
-                    // console.log('scan->' + decodedText);
-                    startScan.style.width = '92%';
-                    startScan.style.height = '5em';
-                    startScan.style.borderRadius = '12px';
-                    startScan.innerText = '扫码结果：' + decodedText;
-                    flag = 0;
-                }).catch((err) => {
-                });
-            }, (errorMessage) => {
-            });
-        }
-    }
-</script>
-
 <style>
-    body {
-        margin: 0;
+    body{
         display: flex;
-        height: 100vh;
         align-items: center;
         justify-content: center;
-        background-image: linear-gradient(10deg, #004080, #fff);
-    }
+        flex-direction: column;
 
-    #startScan {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 12px;
-        border: none;
-        width: 92%;
-        height: 5em;
-        margin: 1em auto;
-        background: rgb(220, 220, 220);
-        transition: all 0.3s;
     }
-
-    #btm {
-        position: fixed;
-        bottom: 0;
-        text-align: center;
-        color: rgb(185, 185, 185);
-        font-size: 0.5em;
-    }
-
-    video {
-        border-radius: 10px;
-    }
-
-    #qr-shaded-region {
-        border: none !important;
+    button{
+        margin: 2rem;
+        font-size: 3rem;
+        width: 40%;
+        padding: 1rem;
+        border-radius:10rem;
     }
 </style>
-
 </html>
