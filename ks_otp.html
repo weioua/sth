@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>KS_otp</title>
-    <link rel="shortcut icon" href="./icon.png">
 </head>
 <body>
 <h1 title="KS-otp 1.0" style="text-align: center">KS 一次性动态验证码<br><small>One-time Password</small></h1>
@@ -248,8 +247,8 @@
 
     function updateCodeAndProgress() {
         const secret = 'Wiapp@TOTP1.0'; // 固定字符串
-        const period = 10; // 时间步长（秒）
-        const digits = 5;  //位数
+        const period = 20; // 时间步长（秒）
+        const digits = 4;  //位数
 
         const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
         const timeStep = Math.floor(currentTime / period); // 当前时间步长
@@ -338,7 +337,7 @@
     #code {
         text-align: center;
         font-size: 6rem;
-        margin-bottom: 25px;
+        margin: 4rem 6rem 25px;
         cursor: pointer;
         width: 25rem;
         font-family: Consolas, serif;
@@ -392,18 +391,20 @@
         }
 
         #code {
-            font-size: 10rem;
+            font-size: 11rem;
             width: auto;
+            margin: 4rem 7rem 25px;
         }
 
         #progress-bar {
-            height: 65px;
+            height: 80px;
             border-radius: 100px;
         }
 
         #remaining-time{
-            font-size: 2rem;
-            margin-left: -7rem;
+            text-align: right;
+            font-size: 2.5rem;
+            margin-left: -8rem;
         }
 
         .toast {
