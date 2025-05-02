@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Light & ImagExpo</title>
+    <link href="./imgs/4-o-gy.png" rel="shortcut icon">
+    <link rel="stylesheet" href="https://unpkg.com/viewerjs@1.11.7/dist/viewer.css">
+    <script src="https://unpkg.com/viewerjs@1.11.7/dist/viewer.js"></script>
+</head>
+
+<body>
+    <div class="head" onclick="scrollToTop()">Light & ImagExpo 光影视界·图展
+    </div>
+    <div style="height: 40px"></div>
+    <div class="info2">
+        <h3>Light & ImagExpo <span style="font-weight: lighter;">光影视界·图展专栏</span>
+        </h3>
+    </div>
+    <div class="info whitetodark">
+        <h2 style="border-left: #083a7b solid 6px;padding-left: 6px;">光影之月·2025年5月精选图片</h2>
+        <div class="imgs">
+            <img src="./imgs/testimg.png" />
+        </div>
+    </div>
+    <!-- EXIF信息容器 -->
+    <div id="exifInfo" class="exif-tooltip"></div>
+    <div class="botm">
+        <div
+            style="cursor: pointer;padding: 0 8px;margin-left: 10px;font-size: 16px;color: #515151;font-family: serif;">
+            <div style="line-height: 21px;margin: 0;">2025 © <span onclick="scrollToTop()" title="回到顶部">Light & ImagExpo 光影视界·图展</span></div>
+        </div>
+    </div>
+</body>
+<style>
+    html {
+        width: 100%;
+        height: auto;
+    }
+
+    /* ::-webkit-scrollbar {
+        display: none;
+    } */
+
+    body {
+        margin: 0;
+        font-family: sans-serif;
+        font-size: 18px;
+        width: 100%;
+        height: 100%;
+    }
+
+    button{
+        background-color: #1f5e95;
+        color: #fff;
+        padding: 4px 10px;
+        border-radius: 6px;
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 20px;
+        font-size: 14px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .head {
+        position: fixed;
+        font-weight: bold;
+        font-size: 30px;
+        top: 15px;
+        /* top: 0; */
+        left: 50%; /* 水平居中关键 */
+        transform: translateX(-50%); /* 修正居中偏移 */
+        width: max-content;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        background: #fffffff0;
+        flex-direction: column;
+        padding: 10px 40px;
+        border-radius: 20px;
+        /* border-radius: 0 0 14px 14px; */
+        box-shadow: 0 0 12px 4px #ffffffde;
+        /* box-shadow: 0 0 4px 4px #fffffff0; */
+        cursor: default;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .hide-head {
+        font-size: 10px;
+        font-weight: normal;
+        padding: 5px 20px;
+        box-shadow: 0 0 6px 3px #ffffffde;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        transition: all 0.3s ease-in-out;
+    }
+
+    .info {
+        padding: 20px;
+        height: 100%;
+        background: #d8d8d8;
+    }
+    .whitetodark{
+        background: linear-gradient(180deg, #fff 0%,#ececec 40%, #d8d8d8 100%);
+    }
+
+    .darktowhite{
+        background: linear-gradient(180deg, #d8d8d8 0%,#ececec 60%, #fff 100%);
+    }
+
+    .info2 {
+        font-family: serif;
+        text-indent: 2em;
+        display: flex;
+        padding: 20px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-around;
+    }
+
+    .imgs {
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .imgs img {
+        height: 200px;
+        margin: 13px;
+        border: #ffffff 20px solid;
+        cursor: pointer;
+    }
+
+    #imgs2 {
+        display: none;
+    }
+
+    .botm {
+        padding: 20px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* EXIF信息框样式 */
+    .exif-tooltip {
+        position: fixed;
+        display: none;
+        background: rgba(0, 0, 0, 0.884);
+        color: white;
+        padding: 12px;
+        border-radius: 12px;
+        font-family: 'MiSans ExtraLight',serif;
+        font-size: 16px;
+        max-width: 3000px;
+        pointer-events: none;
+        box-shadow: 4px 4px 12px 1px rgba(138, 138, 138, 0.5);
+    }
+
+    .exif-item {
+        margin: 6px 0;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .exif-label {
+        color: #a8d8ff;
+        margin-right: 1rem;
+        min-width: 3rem;
+    }
+</style>
+<script>
+    window.addEventListener('scroll', function () {
+        const element = document.querySelector('.head');
+        const halfScreen = window.innerHeight / 1.5;
+        if (window.scrollY > halfScreen/2) {
+            // element.style.transition= 'none';
+            // element.style.position = 'fixed';
+            // element.style.left='50%';
+            // element.style.transform='translateX(-50%)';
+            // element.style.transition= 'all 0.3s ease-in-out';
+            element.classList.add('hide-head');
+        } else {
+            element.classList.remove('hide-head');
+        }
+    });
+    function scrollToTop() {
+        window.scrollTo({top: 0,behavior: 'smooth'});
+    }
+
+    window.vEXIF=null;
+
+    document.querySelectorAll('img').forEach(function(img) {
+        img.alt = "敬请期待！";
+        img.onclick=function(){
+            console.log(vEXIF);
+        };
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const images = document.querySelectorAll('div.imgs');
+        images.forEach(img => {
+            new Viewer(img, {
+                button: true,
+                title: false,
+                fullscreen: true,
+                hidden: function() {
+                    setTimeout(function() {
+                        console.clear()
+                        console.log(vEXIF);
+                        vEXIF=null;
+                    },100)
+                }
+            });
+        })
+    });
+
+</script>
+<script src="./js/exif-reader.js"></script>
+<script data-c-info="exif">
+    // 等待 DOM 加载完成
+    document.addEventListener('DOMContentLoaded', function () {
+        if(window.location.protocol === 'file:'){
+            return
+        }
+        // 获取 EXIF 提示框元素
+        const exifTooltip = document.getElementById('exifInfo');
+        const exifCache = new Map(); // 缓存 EXIF 数据
+
+        // 全局鼠标移动监听（控制提示框位置）
+        document.addEventListener('mousemove', (e) => {
+            if (document.body.classList.contains('viewer-open')) {
+                exifTooltip.style.display = 'none';
+                return;
+            }
+
+            if (exifTooltip.style.display === 'block') {
+                exifTooltip.style.left = `${e.clientX + 15}px`;
+                exifTooltip.style.top = `${e.clientY + 15}px`;
+            }
+        });
+
+        // 为所有图片绑定事件（包括动态加载的图片）
+        function bindImageEvents() {
+            document.querySelectorAll('img').forEach(img => {
+                if (img.dataset.hasExifListener) return; // 避免重复绑定
+
+                img.addEventListener('mouseenter', handleImageHover);
+                img.addEventListener('mouseleave', () => {
+                    exifTooltip.style.display = 'none';
+                });
+                img.dataset.hasExifListener = 'true'; // 标记已绑定
+            });
+        }
+
+        // 图片悬停处理
+        async function handleImageHover(e) {
+            if (document.body.classList.contains('viewer-open')) {
+                return;
+            }
+
+            const img = e.target;
+            exifTooltip.style.display = 'block';
+            exifTooltip.innerHTML = '<div class="exif-loading">加载中...</div>';
+
+            try {
+                let tags;
+                const imgKey = img.src; // 使用图片URL作为缓存键
+
+                // 检查缓存
+                if (exifCache.has(imgKey)) {
+                    tags = exifCache.get(imgKey);
+                } else {
+                    // 从网络或本地加载图片数据
+                    const response = await fetch(img.src);
+                    const arrayBuffer = await response.arrayBuffer();
+                    tags = ExifReader.load(arrayBuffer);
+                    exifCache.set(imgKey, tags); // 存入缓存
+                }
+
+                // 渲染 EXIF 信息
+                renderExifTooltip(tags);
+            } catch (error) {
+                // exifTooltip.innerHTML = '<div class="exif-error">无法读取EXIF数据</div>';
+                // console.error('EXIF读取失败:', error);
+            }
+        }
+
+        // 渲染 EXIF 信息到提示框
+        function renderExifTooltip(tags) {
+            vEXIF=tags;
+            exifTooltip.innerHTML = `
+            <div class="exif-item">
+                <span class="exif-label">光圈</span>
+                <span>${tags.FNumber?.description || '未知'}</span>
+            </div>
+            <div class="exif-item">
+                <span class="exif-label">焦距</span>
+                <span>${tags.FocalLength?.description || '未知'}</span>
+            </div>
+            <div class="exif-item">
+                <span class="exif-label">快门</span>
+                <span>${tags.ExposureTime?.description || '未知'}</span>
+            </div>
+            <div class="exif-item">
+                <span class="exif-label">感光度</span>
+                <span>${tags.ISOSpeedRatings?.description || '未知'}</span>
+            </div>
+            <div class="exif-item">
+                <span class="exif-label">白平衡</span>
+                <span>${tags.WhiteBalance?.description || '未知'}</span>
+            </div>
+            <div class="exif-item">
+                <span class="exif-label">曝光补偿</span>
+                <span>${tags.ExposureBiasValue?.description.slice(0,7) || '未知'}</span>
+            </div>
+            
+            <div class="exif-item">
+                <span class="exif-label"> </span>
+                <span> </span>
+            </div>
+            <div class="exif-item">
+                <span class="exif-label">作者</span>
+                <span>${tags.Artist?.description || 'FRK'}</span>
+            </div>
+            <div class="exif-item">
+                <span class="exif-label">日期</span>
+                <span>${tags.DateTime?.description || '未知'}</span>
+            </div>
+            <div class="exif-item">
+                <span class="exif-label">设备</span>
+                <span>${tags.Model?.description || '未知'}</span>
+            </div>
+            <div class="exif-item">
+                <span>${tags.LensModel?.description || ''}</span>
+            </div>
+        `;
+        }
+
+        // 初始化绑定（静态图片）
+        bindImageEvents();
+
+        // 动态图片监听（适用于异步加载的图片）
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.addedNodes) {
+                    bindImageEvents(); // 重新绑定新图片
+                }
+            });
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
+</script>
+</html>
