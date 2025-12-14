@@ -1,333 +1,368 @@
 <!DOCTYPE html>
 <html lang="wi">
+
 <head>
     <meta charset="UTF-8">
-    <title>KS_otp</title>
+    <title>KS_otp2.0</title>
 </head>
+
 <body>
-<h1 title="KS-otp 1.0" style="text-align: center">KS 一次性动态验证码<br><small>One-time Password</small></h1>
-<div>
-    <h1 id="code" title="点击复制验证码"></h1>
-    <div class="time-div">
-        <div id="progress-bar">
-            <div></div>
+    <h1 title="KS-otp 1.0" style="text-align: center">KS 一次性动态验证码<br><small>One-time Password</small></h1>
+    <div id="enterUserDiv" style="display: flex;align-items: stretch; gap: 8px;">
+        <span style="font-size: 1.3rem;">用户名</span><input type="text" id="userInput" maxlength="6"
+            style="width: 10rem; height: 2rem; font-size: 1.3rem; font-weight: bold; text-align: center;border: 2px solid #ccc; border-radius: 10px;padding: 3px;box-sizing: border-box;">
+        <button id="userBtn"
+            style="background: #004080;color: white;border-radius: 10px;padding: 2px; width: 3rem;height: 2rem;">确认</button>
+    </div>
+    <div>
+        <h1 id="code" title="点击复制验证码"></h1>
+        <div class="time-div">
+            <div id="progress-bar">
+                <div></div>
+            </div>
+            <div id="remaining-time"></div>
         </div>
-        <div id="remaining-time"></div>
+
+        <div id="toast" class="toast"></div>
     </div>
 
-    <div id="toast" class="toast"></div>
-</div>
 
-
-<script>
-    if (localStorage['theme'] === 'b') {
-        document.body.style.background = '#000000';
-        document.body.style.color = '#efefef';
-        document.getElementById('progress-bar').style.background = '#b4b4b4';
-        document.getElementById('remaining-time').style.color = '#000000';
-    }
-
-    function fn_md5(message) {
-        function rotateLeft(lValue, iShiftBits) {
-            return (lValue << iShiftBits) | (lValue >>> (32 - iShiftBits));
+    <script>
+        if (localStorage['theme'] === 'b') {
+            document.body.style.background = '#000000';
+            document.body.style.color = '#efefef';
+            document.getElementById('progress-bar').style.background = '#b4b4b4';
+            document.getElementById('remaining-time').style.color = '#000000';
         }
 
-        function addUnsigned(lX, lY) {
-            let lX4, lY4, lX8, lY8, lResult;
-            lX8 = (lX & 0x80000000);
-            lY8 = (lY & 0x80000000);
-            lX4 = (lX & 0x40000000);
-            lY4 = (lY & 0x40000000);
-            lResult = (lX & 0x3FFFFFFF) + (lY & 0x3FFFFFFF);
-            if (lX4 & lY4) {
-                return (lResult ^ 0x80000000 ^ lX8 ^ lY8);
+        let SWITCH_USER = 0
+        const params = new URLSearchParams(window.location.search);
+        
+        if (params.get('e') != 1) {
+            document.getElementById('enterUserDiv').style.display = 'none';
+        }else{
+            SWITCH_USER=1
+        }
+        if (params.get('u')) {
+            document.getElementById('userInput').value = params.get('u');
+            SWITCH_USER=1
+        }
+
+        document.getElementById('userBtn').onclick = () => {
+            try {
+                const urlObj = new URL(location.href);
+                urlObj.searchParams.set('u', document.getElementById('userInput').value);
+                location.href=urlObj.toString();
+            } catch (e) {
+                console.error(e);
             }
-            if (lX4 | lY4) {
-                if (lResult & 0x40000000) {
-                    return (lResult ^ 0xC0000000 ^ lX8 ^ lY8);
-                } else {
-                    return (lResult ^ 0x40000000 ^ lX8 ^ lY8);
+        }
+
+        function fn_md5(message) {
+            function rotateLeft(lValue, iShiftBits) {
+                return (lValue << iShiftBits) | (lValue >>> (32 - iShiftBits));
+            }
+
+            function addUnsigned(lX, lY) {
+                let lX4, lY4, lX8, lY8, lResult;
+                lX8 = (lX & 0x80000000);
+                lY8 = (lY & 0x80000000);
+                lX4 = (lX & 0x40000000);
+                lY4 = (lY & 0x40000000);
+                lResult = (lX & 0x3FFFFFFF) + (lY & 0x3FFFFFFF);
+                if (lX4 & lY4) {
+                    return (lResult ^ 0x80000000 ^ lX8 ^ lY8);
                 }
-            } else {
-                return (lResult ^ lX8 ^ lY8);
+                if (lX4 | lY4) {
+                    if (lResult & 0x40000000) {
+                        return (lResult ^ 0xC0000000 ^ lX8 ^ lY8);
+                    } else {
+                        return (lResult ^ 0x40000000 ^ lX8 ^ lY8);
+                    }
+                } else {
+                    return (lResult ^ lX8 ^ lY8);
+                }
             }
-        }
 
-        function F(x, y, z) {
-            return (x & y) | ((~x) & z);
-        }
+            function F(x, y, z) {
+                return (x & y) | ((~x) & z);
+            }
 
-        function G(x, y, z) {
-            return (x & z) | (y & (~z));
-        }
+            function G(x, y, z) {
+                return (x & z) | (y & (~z));
+            }
 
-        function H(x, y, z) {
-            return (x ^ y ^ z);
-        }
+            function H(x, y, z) {
+                return (x ^ y ^ z);
+            }
 
-        function I(x, y, z) {
-            return (y ^ (x | (~z)));
-        }
+            function I(x, y, z) {
+                return (y ^ (x | (~z)));
+            }
 
-        function FF(a, b, c, d, x, s, ac) {
-            a = addUnsigned(a, addUnsigned(addUnsigned(F(b, c, d), x), ac));
-            return addUnsigned(rotateLeft(a, s), b);
-        }
+            function FF(a, b, c, d, x, s, ac) {
+                a = addUnsigned(a, addUnsigned(addUnsigned(F(b, c, d), x), ac));
+                return addUnsigned(rotateLeft(a, s), b);
+            }
 
-        function GG(a, b, c, d, x, s, ac) {
-            a = addUnsigned(a, addUnsigned(addUnsigned(G(b, c, d), x), ac));
-            return addUnsigned(rotateLeft(a, s), b);
-        }
+            function GG(a, b, c, d, x, s, ac) {
+                a = addUnsigned(a, addUnsigned(addUnsigned(G(b, c, d), x), ac));
+                return addUnsigned(rotateLeft(a, s), b);
+            }
 
-        function HH(a, b, c, d, x, s, ac) {
-            a = addUnsigned(a, addUnsigned(addUnsigned(H(b, c, d), x), ac));
-            return addUnsigned(rotateLeft(a, s), b);
-        }
+            function HH(a, b, c, d, x, s, ac) {
+                a = addUnsigned(a, addUnsigned(addUnsigned(H(b, c, d), x), ac));
+                return addUnsigned(rotateLeft(a, s), b);
+            }
 
-        function II(a, b, c, d, x, s, ac) {
-            a = addUnsigned(a, addUnsigned(addUnsigned(I(b, c, d), x), ac));
-            return addUnsigned(rotateLeft(a, s), b);
-        }
+            function II(a, b, c, d, x, s, ac) {
+                a = addUnsigned(a, addUnsigned(addUnsigned(I(b, c, d), x), ac));
+                return addUnsigned(rotateLeft(a, s), b);
+            }
 
-        function convertToWordArray(strMessage) {
+            function convertToWordArray(strMessage) {
+                let lMessageLength = strMessage.length;
+                let lNumberOfWords = Math.ceil(lMessageLength / 4);
+                let lWordArray = new Array(lNumberOfWords);
+                let lBytePosition = 0;
+                let lByteCount = 0;
+                while (lByteCount < lMessageLength) {
+                    lWordArray[lBytePosition >> 2] |= (strMessage.charCodeAt(lByteCount) & 0xFF) << ((lBytePosition % 4) * 8);
+                    lBytePosition++;
+                    lByteCount++;
+                }
+                return lWordArray;
+            }
+
+            function wordToHex(lValue) {
+                let strHex = '';
+                for (let i = 0; i <= 3; i++) {
+                    strHex += hexDigits.charAt((lValue >> (i * 8 + 4)) & 0x0F) + hexDigits.charAt((lValue >> (i * 8)) & 0x0F);
+                }
+                return strHex;
+            }
+
+            function utf8Encode(string) {
+                string = string.replace(/\r\n/g, '\n');
+                let utftext = '';
+
+                for (let n = 0; n < string.length; n++) {
+                    let c = string.charCodeAt(n);
+
+                    if (c < 128) {
+                        utftext += String.fromCharCode(c);
+                    } else if ((c > 127) && (c < 2048)) {
+                        utftext += String.fromCharCode((c >> 6) | 192);
+                        utftext += String.fromCharCode((c & 63) | 128);
+                    } else {
+                        utftext += String.fromCharCode((c >> 12) | 224);
+                        utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                        utftext += String.fromCharCode((c & 63) | 128);
+                    }
+                }
+
+                return utftext;
+            }
+
+            let hexDigits = "0123456789abcdef";
+            let strMessage = utf8Encode(message);
             let lMessageLength = strMessage.length;
-            let lNumberOfWords = Math.ceil(lMessageLength / 4);
-            let lWordArray = new Array(lNumberOfWords);
-            let lBytePosition = 0;
-            let lByteCount = 0;
-            while (lByteCount < lMessageLength) {
-                lWordArray[lBytePosition >> 2] |= (strMessage.charCodeAt(lByteCount) & 0xFF) << ((lBytePosition % 4) * 8);
-                lBytePosition++;
-                lByteCount++;
+            let lNumberOf512bitBlocks = Math.ceil((lMessageLength + 8 + 64) / 512);
+            let lNumberOfWords = lNumberOf512bitBlocks * 16;
+            let lWordArray;
+            lWordArray = convertToWordArray(strMessage);
+
+            let lLengthInBits = lMessageLength * 8;
+            lWordArray[lNumberOfWords - 2] = lLengthInBits;
+            lWordArray[lNumberOfWords - 1] = lLengthInBits >>> 0;
+
+            let lA = 0x67452301;
+            let lB = 0xefcdab89;
+            let lC = 0x98badcfe;
+            let lD = 0x10325476;
+
+            let lX = [];
+            let lK;
+
+            for (lK = 0; lK < lNumberOfWords; lK += 16) {
+                let lSaveA = lA;
+                let lSaveB = lB;
+                let lSaveC = lC;
+                let lSaveD = lD;
+
+                lX = lWordArray.slice(lK, lK + 16);
+
+                lA = FF(lA, lB, lC, lD, lX[0], 7, 0xd76aa478);
+                lD = FF(lD, lA, lB, lC, lX[1], 12, 0xe8c7b756);
+                lC = FF(lC, lD, lA, lB, lX[2], 17, 0x242070db);
+                lB = FF(lB, lC, lD, lA, lX[3], 22, 0xc1bdceee);
+                lA = FF(lA, lB, lC, lD, lX[4], 7, 0xf57c0faf);
+                lD = FF(lD, lA, lB, lC, lX[5], 12, 0x4787c62a);
+                lC = FF(lC, lD, lA, lB, lX[6], 17, 0xa8304613);
+                lB = FF(lB, lC, lD, lA, lX[7], 22, 0xfd469501);
+                lA = FF(lA, lB, lC, lD, lX[8], 7, 0x698098d8);
+                lD = FF(lD, lA, lB, lC, lX[9], 12, 0x8b44f7af);
+                lC = FF(lC, lD, lA, lB, lX[10], 17, 0xffff5bb1);
+                lB = FF(lB, lC, lD, lA, lX[11], 22, 0x895cd7be);
+                lA = FF(lA, lB, lC, lD, lX[12], 7, 0x6b901122);
+                lD = FF(lD, lA, lB, lC, lX[13], 12, 0xfd987193);
+                lC = FF(lC, lD, lA, lB, lX[14], 17, 0xa679438e);
+                lB = FF(lB, lC, lD, lA, lX[15], 22, 0x49b40821);
+
+                lA = GG(lA, lB, lC, lD, lX[1], 5, 0xf61e2562);
+                lD = GG(lD, lA, lB, lC, lX[6], 9, 0xc040b340);
+                lC = GG(lC, lD, lA, lB, lX[11], 14, 0x265e5a51);
+                lB = GG(lB, lC, lD, lA, lX[0], 20, 0xe9b6c7aa);
+                lA = GG(lA, lB, lC, lD, lX[5], 5, 0xd62f105d);
+                lD = GG(lD, lA, lB, lC, lX[10], 9, 0x2441453);
+                lC = GG(lC, lD, lA, lB, lX[15], 14, 0xd8a1e681);
+                lB = GG(lB, lC, lD, lA, lX[4], 20, 0xe7d3fbc8);
+                lA = GG(lA, lB, lC, lD, lX[9], 5, 0x21e1cde6);
+                lD = GG(lD, lA, lB, lC, lX[14], 9, 0xc33707d6);
+                lC = GG(lC, lD, lA, lB, lX[3], 14, 0xf4d50d87);
+                lB = GG(lB, lC, lD, lA, lX[8], 20, 0x455a14ed);
+                lA = GG(lA, lB, lC, lD, lX[13], 5, 0xa9e3e905);
+                lD = GG(lD, lA, lB, lC, lX[2], 9, 0xfcefa3f8);
+                lC = GG(lC, lD, lA, lB, lX[7], 14, 0x676f02d9);
+                lB = GG(lB, lC, lD, lA, lX[12], 20, 0x8d2a4c8a);
+
+                lA = HH(lA, lB, lC, lD, lX[5], 4, 0xfffa3942);
+                lD = HH(lD, lA, lB, lC, lX[8], 11, 0x8771f681);
+                lC = HH(lC, lD, lA, lB, lX[11], 16, 0x6d9d6122);
+                lB = HH(lB, lC, lD, lA, lX[14], 23, 0xfde5380c);
+                lA = HH(lA, lB, lC, lD, lX[1], 4, 0xa4beea44);
+                lD = HH(lD, lA, lB, lC, lX[4], 11, 0x4bdecfa9);
+                lC = HH(lC, lD, lA, lB, lX[7], 16, 0xf6bb4b60);
+                lB = HH(lB, lC, lD, lA, lX[10], 23, 0xbebfbc70);
+                lA = HH(lA, lB, lC, lD, lX[13], 4, 0x289b7ec6);
+                lD = HH(lD, lA, lB, lC, lX[0], 11, 0xeaa127fa);
+                lC = HH(lC, lD, lA, lB, lX[3], 16, 0xd4ef3085);
+                lB = HH(lB, lC, lD, lA, lX[6], 23, 0x4881d05);
+                lA = HH(lA, lB, lC, lD, lX[9], 4, 0xd9d4d039);
+                lD = HH(lD, lA, lB, lC, lX[12], 11, 0xe6db99e5);
+                lC = HH(lC, lD, lA, lB, lX[15], 16, 0x1fa27cf8);
+                lB = HH(lB, lC, lD, lA, lX[2], 23, 0xc4ac5665);
+
+                lA = II(lA, lB, lC, lD, lX[0], 6, 0xf4292244);
+                lD = II(lD, lA, lB, lC, lX[7], 10, 0x432aff97);
+                lC = II(lC, lD, lA, lB, lX[14], 15, 0xab9423a7);
+                lB = II(lB, lC, lD, lA, lX[5], 21, 0xfc93a039);
+                lA = II(lA, lB, lC, lD, lX[12], 6, 0x655b59c3);
+                lD = II(lD, lA, lB, lC, lX[3], 10, 0x8f0ccc92);
+                lC = II(lC, lD, lA, lB, lX[10], 15, 0xffeff47d);
+                lB = II(lB, lC, lD, lA, lX[1], 21, 0x85845dd1);
+                lA = II(lA, lB, lC, lD, lX[8], 6, 0x6fa87e4f);
+                lD = II(lD, lA, lB, lC, lX[15], 10, 0xfe2ce6e0);
+                lC = II(lC, lD, lA, lB, lX[6], 15, 0xa3014314);
+                lB = II(lB, lC, lD, lA, lX[13], 21, 0x4e0811a1);
+                lA = II(lA, lB, lC, lD, lX[4], 6, 0xf7537e82);
+                lD = II(lD, lA, lB, lC, lX[11], 10, 0xbd3af235);
+                lC = II(lC, lD, lA, lB, lX[2], 15, 0x2ad7d2bb);
+                lB = II(lB, lC, lD, lA, lX[9], 21, 0xeb86d391);
+
+                lA = addUnsigned(lA, lSaveA);
+                lB = addUnsigned(lB, lSaveB);
+                lC = addUnsigned(lC, lSaveC);
+                lD = addUnsigned(lD, lSaveD);
             }
-            return lWordArray;
+
+            let result = wordToHex(lA) + wordToHex(lB) + wordToHex(lC) + wordToHex(lD);
+
+            return result.toLowerCase();
         }
 
-        function wordToHex(lValue) {
-            let strHex = '';
-            for (let i = 0; i <= 3; i++) {
-                strHex += hexDigits.charAt((lValue >> (i * 8 + 4)) & 0x0F) + hexDigits.charAt((lValue >> (i * 8)) & 0x0F);
-            }
-            return strHex;
+        // 生成TOTP验证码
+        function generateTOTP(secret, digits, period) { // 修改period秒
+            const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
+            const timeStep = Math.floor(currentTime / period); // 时间步长
+            const message = `${secret}-${timeStep}`; // 组合密钥和时间步长
+            const hashValue = fn_md5(message); // 计算MD5哈希值
+
+            // 从哈希值中提取验证码
+            const code = parseInt(hashValue.substring(0, digits), 16) % Math.pow(10, digits);
+            return ('0000' + code).slice(-digits);
         }
 
-        function utf8Encode(string) {
-            string = string.replace(/\r\n/g, '\n');
-            let utftext = '';
+        function updateCodeAndProgress() {
+            let secret = 'Wi@TOTP2.0'; // 固定字符串
+            let period = 25; // 时间步长（秒）
+            let digits = 4;  //位数
+            if (SWITCH_USER) {
+                secret = 'Wi@TOTP#'+document.getElementById('userInput').value; // 返解用户名
+            }
 
-            for (let n = 0; n < string.length; n++) {
-                let c = string.charCodeAt(n);
+            const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
+            const timeStep = Math.floor(currentTime / period); // 当前时间步长
+            const currentStepStart = timeStep * period; // 当前时间步长的起始时间
+            let elapsed = currentTime - currentStepStart; // 已经过去的秒数
+            const remaining = period - elapsed; // 剩余的秒数
 
-                if (c < 128) {
-                    utftext += String.fromCharCode(c);
-                } else if ((c > 127) && (c < 2048)) {
-                    utftext += String.fromCharCode((c >> 6) | 192);
-                    utftext += String.fromCharCode((c & 63) | 128);
+            document.getElementById('code').innerText = generateTOTP(secret, digits, period);
+
+            const progressBar = document.querySelector('#progress-bar div');
+            const initialProgress = (elapsed / period) * 100; // 初始进度百分比
+            progressBar.style.width = initialProgress + '%';
+
+            document.getElementById('remaining-time').innerText = `${remaining + 1}/${period}`;
+
+            if (remaining === 9) {
+                progressBar.style.width = '0%';
+                progressBar.style.transition = 'none';
+            }
+            setTimeout(function () {
+                progressBar.style.transition = 'width 1s linear';
+            }, 100)
+
+            const interval = setInterval(() => {
+                if (elapsed >= period) {
+                    clearInterval(interval);
+                    updateCodeAndProgress(); // 更新验证码和进度条
+                    // if (remaining === 9) {
+                    //     progressBar.style.width = '0%';
+                    // }
                 } else {
-                    utftext += String.fromCharCode((c >> 12) | 224);
-                    utftext += String.fromCharCode(((c >> 6) & 63) | 128);
-                    utftext += String.fromCharCode((c & 63) | 128);
+                    elapsed += 1; // 每秒增加1秒
+                    const progress = (elapsed / period) * 100; // 当前进度百分比
+                    progressBar.style.width = progress + '%';
+                    const remainingTime = period - elapsed; // 剩余的秒数
+                    document.getElementById('remaining-time').innerText = `${remainingTime + 1}/${period}`;
                 }
+            }, 1000); // 每秒更新一次进度条
+        }
+
+        // 初始化
+        updateCodeAndProgress();
+
+        // 复制
+        document.getElementById('code').onclick = function () {
+            if (!navigator.clipboard) {
+                showToast('您的浏览器不支持剪贴板功能。');
+                return;
             }
-
-            return utftext;
+            const code = document.getElementById('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('已复制到剪贴板');
+            }).catch(e => {
+                alert('复制失败' + e.message);
+            });
         }
 
-        let hexDigits = "0123456789abcdef";
-        let strMessage = utf8Encode(message);
-        let lMessageLength = strMessage.length;
-        let lNumberOf512bitBlocks = Math.ceil((lMessageLength + 8 + 64) / 512);
-        let lNumberOfWords = lNumberOf512bitBlocks * 16;
-        let lWordArray;
-        lWordArray = convertToWordArray(strMessage);
-
-        let lLengthInBits = lMessageLength * 8;
-        lWordArray[lNumberOfWords - 2] = lLengthInBits;
-        lWordArray[lNumberOfWords - 1] = lLengthInBits >>> 0;
-
-        let lA = 0x67452301;
-        let lB = 0xefcdab89;
-        let lC = 0x98badcfe;
-        let lD = 0x10325476;
-
-        let lX = [];
-        let lK;
-
-        for (lK = 0; lK < lNumberOfWords; lK += 16) {
-            let lSaveA = lA;
-            let lSaveB = lB;
-            let lSaveC = lC;
-            let lSaveD = lD;
-
-            lX = lWordArray.slice(lK, lK + 16);
-
-            lA = FF(lA, lB, lC, lD, lX[0], 7, 0xd76aa478);
-            lD = FF(lD, lA, lB, lC, lX[1], 12, 0xe8c7b756);
-            lC = FF(lC, lD, lA, lB, lX[2], 17, 0x242070db);
-            lB = FF(lB, lC, lD, lA, lX[3], 22, 0xc1bdceee);
-            lA = FF(lA, lB, lC, lD, lX[4], 7, 0xf57c0faf);
-            lD = FF(lD, lA, lB, lC, lX[5], 12, 0x4787c62a);
-            lC = FF(lC, lD, lA, lB, lX[6], 17, 0xa8304613);
-            lB = FF(lB, lC, lD, lA, lX[7], 22, 0xfd469501);
-            lA = FF(lA, lB, lC, lD, lX[8], 7, 0x698098d8);
-            lD = FF(lD, lA, lB, lC, lX[9], 12, 0x8b44f7af);
-            lC = FF(lC, lD, lA, lB, lX[10], 17, 0xffff5bb1);
-            lB = FF(lB, lC, lD, lA, lX[11], 22, 0x895cd7be);
-            lA = FF(lA, lB, lC, lD, lX[12], 7, 0x6b901122);
-            lD = FF(lD, lA, lB, lC, lX[13], 12, 0xfd987193);
-            lC = FF(lC, lD, lA, lB, lX[14], 17, 0xa679438e);
-            lB = FF(lB, lC, lD, lA, lX[15], 22, 0x49b40821);
-
-            lA = GG(lA, lB, lC, lD, lX[1], 5, 0xf61e2562);
-            lD = GG(lD, lA, lB, lC, lX[6], 9, 0xc040b340);
-            lC = GG(lC, lD, lA, lB, lX[11], 14, 0x265e5a51);
-            lB = GG(lB, lC, lD, lA, lX[0], 20, 0xe9b6c7aa);
-            lA = GG(lA, lB, lC, lD, lX[5], 5, 0xd62f105d);
-            lD = GG(lD, lA, lB, lC, lX[10], 9, 0x2441453);
-            lC = GG(lC, lD, lA, lB, lX[15], 14, 0xd8a1e681);
-            lB = GG(lB, lC, lD, lA, lX[4], 20, 0xe7d3fbc8);
-            lA = GG(lA, lB, lC, lD, lX[9], 5, 0x21e1cde6);
-            lD = GG(lD, lA, lB, lC, lX[14], 9, 0xc33707d6);
-            lC = GG(lC, lD, lA, lB, lX[3], 14, 0xf4d50d87);
-            lB = GG(lB, lC, lD, lA, lX[8], 20, 0x455a14ed);
-            lA = GG(lA, lB, lC, lD, lX[13], 5, 0xa9e3e905);
-            lD = GG(lD, lA, lB, lC, lX[2], 9, 0xfcefa3f8);
-            lC = GG(lC, lD, lA, lB, lX[7], 14, 0x676f02d9);
-            lB = GG(lB, lC, lD, lA, lX[12], 20, 0x8d2a4c8a);
-
-            lA = HH(lA, lB, lC, lD, lX[5], 4, 0xfffa3942);
-            lD = HH(lD, lA, lB, lC, lX[8], 11, 0x8771f681);
-            lC = HH(lC, lD, lA, lB, lX[11], 16, 0x6d9d6122);
-            lB = HH(lB, lC, lD, lA, lX[14], 23, 0xfde5380c);
-            lA = HH(lA, lB, lC, lD, lX[1], 4, 0xa4beea44);
-            lD = HH(lD, lA, lB, lC, lX[4], 11, 0x4bdecfa9);
-            lC = HH(lC, lD, lA, lB, lX[7], 16, 0xf6bb4b60);
-            lB = HH(lB, lC, lD, lA, lX[10], 23, 0xbebfbc70);
-            lA = HH(lA, lB, lC, lD, lX[13], 4, 0x289b7ec6);
-            lD = HH(lD, lA, lB, lC, lX[0], 11, 0xeaa127fa);
-            lC = HH(lC, lD, lA, lB, lX[3], 16, 0xd4ef3085);
-            lB = HH(lB, lC, lD, lA, lX[6], 23, 0x4881d05);
-            lA = HH(lA, lB, lC, lD, lX[9], 4, 0xd9d4d039);
-            lD = HH(lD, lA, lB, lC, lX[12], 11, 0xe6db99e5);
-            lC = HH(lC, lD, lA, lB, lX[15], 16, 0x1fa27cf8);
-            lB = HH(lB, lC, lD, lA, lX[2], 23, 0xc4ac5665);
-
-            lA = II(lA, lB, lC, lD, lX[0], 6, 0xf4292244);
-            lD = II(lD, lA, lB, lC, lX[7], 10, 0x432aff97);
-            lC = II(lC, lD, lA, lB, lX[14], 15, 0xab9423a7);
-            lB = II(lB, lC, lD, lA, lX[5], 21, 0xfc93a039);
-            lA = II(lA, lB, lC, lD, lX[12], 6, 0x655b59c3);
-            lD = II(lD, lA, lB, lC, lX[3], 10, 0x8f0ccc92);
-            lC = II(lC, lD, lA, lB, lX[10], 15, 0xffeff47d);
-            lB = II(lB, lC, lD, lA, lX[1], 21, 0x85845dd1);
-            lA = II(lA, lB, lC, lD, lX[8], 6, 0x6fa87e4f);
-            lD = II(lD, lA, lB, lC, lX[15], 10, 0xfe2ce6e0);
-            lC = II(lC, lD, lA, lB, lX[6], 15, 0xa3014314);
-            lB = II(lB, lC, lD, lA, lX[13], 21, 0x4e0811a1);
-            lA = II(lA, lB, lC, lD, lX[4], 6, 0xf7537e82);
-            lD = II(lD, lA, lB, lC, lX[11], 10, 0xbd3af235);
-            lC = II(lC, lD, lA, lB, lX[2], 15, 0x2ad7d2bb);
-            lB = II(lB, lC, lD, lA, lX[9], 21, 0xeb86d391);
-
-            lA = addUnsigned(lA, lSaveA);
-            lB = addUnsigned(lB, lSaveB);
-            lC = addUnsigned(lC, lSaveC);
-            lD = addUnsigned(lD, lSaveD);
+        // 显示Toast通知
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.style.opacity = '1';
+            toast.style.zIndex = '100';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.zIndex = '-1';
+            }, 1500); // Toast显示2秒后消失
         }
 
-        let result = wordToHex(lA) + wordToHex(lB) + wordToHex(lC) + wordToHex(lD);
-
-        return result.toLowerCase();
-    }
-
-    // 生成TOTP验证码
-    function generateTOTP(secret, digits, period) { // 修改period秒
-        const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
-        const timeStep = Math.floor(currentTime / period); // 时间步长
-        const message = `${secret}-${timeStep}`; // 组合密钥和时间步长
-        const hashValue = fn_md5(message); // 计算MD5哈希值
-
-        // 从哈希值中提取验证码
-        const code = parseInt(hashValue.substring(0, digits), 16) % Math.pow(10, digits);
-        return ('0000' + code).slice(-digits);
-    }
-
-    function updateCodeAndProgress() {
-        const secret = 'Wiapp@TOTP1.0'; // 固定字符串
-        const period = 20; // 时间步长（秒）
-        const digits = 4;  //位数
-
-        const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
-        const timeStep = Math.floor(currentTime / period); // 当前时间步长
-        const currentStepStart = timeStep * period; // 当前时间步长的起始时间
-        let elapsed = currentTime - currentStepStart; // 已经过去的秒数
-        const remaining = period - elapsed; // 剩余的秒数
-
-        document.getElementById('code').innerText = generateTOTP(secret, digits, period);
-
-        const progressBar = document.querySelector('#progress-bar div');
-        const initialProgress = (elapsed / period) * 100; // 初始进度百分比
-        progressBar.style.width = initialProgress + '%';
-
-        document.getElementById('remaining-time').innerText = `${remaining + 1}/${period}`;
-
-        if (remaining === 9) {
-            progressBar.style.width = '0%';
-            progressBar.style.transition = 'none';
+        if (/Android|webOS|iPhone/i.test(navigator.userAgent)) {
+            document.body.classList.add('phone');
         }
-        setTimeout(function () {
-            progressBar.style.transition = 'width 1s linear';
-        }, 100)
-
-        const interval = setInterval(() => {
-            if (elapsed >= period) {
-                clearInterval(interval);
-                updateCodeAndProgress(); // 更新验证码和进度条
-                // if (remaining === 9) {
-                //     progressBar.style.width = '0%';
-                // }
-            } else {
-                elapsed += 1; // 每秒增加1秒
-                const progress = (elapsed / period) * 100; // 当前进度百分比
-                progressBar.style.width = progress + '%';
-                const remainingTime = period - elapsed; // 剩余的秒数
-                document.getElementById('remaining-time').innerText = `${remainingTime + 1}/${period}`;
-            }
-        }, 1000); // 每秒更新一次进度条
-    }
-
-    // 初始化
-    updateCodeAndProgress();
-
-    document.getElementById('code').onclick = function () {
-        if (!navigator.clipboard) {
-            showToast('您的浏览器不支持剪贴板功能。');
-            return;
-        }
-        const code = document.getElementById('code').innerText;
-        navigator.clipboard.writeText(code).then(() => {
-            showToast('已复制到剪贴板');
-        }).catch(e => {
-            alert('复制失败' + e.message);
-        });
-    }
-
-    // 显示Toast通知
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.innerText = message;
-        toast.style.opacity = '1';
-        toast.style.zIndex = '100';
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.zIndex = '-1';
-        }, 1500); // Toast显示2秒后消失
-    }
-
-    if (/Android|webOS|iPhone/i.test(navigator.userAgent)) {
-        document.body.classList.add('phone');
-    }
-</script>
+    </script>
 
 </body>
 <style>
@@ -408,7 +443,7 @@
             border-radius: 100px;
         }
 
-        #remaining-time{
+        #remaining-time {
             text-align: right;
             font-size: 2.5rem;
             margin-left: -8rem;
@@ -422,4 +457,5 @@
         }
     }
 </style>
+
 </html>
