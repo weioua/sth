@@ -9,7 +9,7 @@
 <body>
     <h1 title="KS-otp 1.0" style="text-align: center">KS 一次性动态验证码<br><small>One-time Password</small></h1>
     <div id="enterUserDiv" style="display: flex;align-items: stretch; gap: 8px;">
-        <span style="font-size: 1.3rem;">用户名</span><input type="text" id="userInput" maxlength="6"
+        <span class="yhm" style="font-size: 1.3rem;">用户名</span><input type="text" id="userInput" maxlength="6"
             style="width: 10rem; height: 2rem; font-size: 1.3rem; font-weight: bold; text-align: center;border: 2px solid #ccc; border-radius: 10px;padding: 3px;box-sizing: border-box;">
         <button id="userBtn"
             style="background: #004080;color: white;border-radius: 10px;padding: 2px; width: 3rem;height: 2rem;">确认</button>
@@ -26,7 +26,6 @@
         <div id="toast" class="toast"></div>
     </div>
 
-
     <script>
         if (localStorage['theme'] === 'b') {
             document.body.style.background = '#000000';
@@ -37,22 +36,22 @@
 
         let SWITCH_USER = 0
         const params = new URLSearchParams(window.location.search);
-        
+
         if (params.get('e') != 1) {
             document.getElementById('enterUserDiv').style.display = 'none';
-        }else{
-            SWITCH_USER=1
+        } else {
+            SWITCH_USER = 1
         }
         if (params.get('u')) {
             document.getElementById('userInput').value = params.get('u');
-            SWITCH_USER=1
+            SWITCH_USER = 1
         }
 
         document.getElementById('userBtn').onclick = () => {
             try {
                 const urlObj = new URL(location.href);
                 urlObj.searchParams.set('u', document.getElementById('userInput').value);
-                location.href=urlObj.toString();
+                location.href = urlObj.toString();
             } catch (e) {
                 console.error(e);
             }
@@ -288,7 +287,7 @@
             let period = 25; // 时间步长（秒）
             let digits = 4;  //位数
             if (SWITCH_USER) {
-                secret = 'Wi@TOTP#'+document.getElementById('userInput').value; // 返解用户名
+                secret = 'Wi@TOTP#' + document.getElementById('userInput').value; // 返解用户名
             }
 
             const currentTime = Math.floor(Date.now() / 1000); // 当前时间（秒）
@@ -361,6 +360,17 @@
 
         if (/Android|webOS|iPhone/i.test(navigator.userAgent)) {
             document.body.classList.add('phone');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            let btn = document.getElementById('userInput')
+            btn.addEventListener('keydown', (e) => handleKeydown(e.target, e));
+        });
+
+        function handleKeydown(currentInput, e) {
+            if (e.key === "Enter") {
+                document.getElementById('userBtn').click();
+            }
         }
     </script>
 
@@ -454,6 +464,27 @@
             font-size: 3rem;
             padding: 1rem 2rem;
             border-radius: 50px;
+        }
+
+        #enterUserDiv {
+            flex-wrap: wrap !important;
+            flex-direction: column !important;
+            align-items: center !important;
+        }
+
+        #userInput {
+            font-size: 2rem !important;
+            width: 100%!important;
+            height: 5rem!important;
+        }
+        #userBtn {
+            font-size: 2rem !important;
+            width: 90% !important;
+            height: 5rem!important;
+            border-radius: 180px !important;
+        }
+        .yhm{
+            font-size: 2rem !important;
         }
     }
 </style>
