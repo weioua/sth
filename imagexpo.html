@@ -10,15 +10,11 @@
 </head>
 
 <body>
-    <div class="head" onclick="scrollToTop()">Light & ImagExpo 光影视界·图展
+    <div class="head" onclick="scrollToTop()">Light & ImagExpo 光影视界
     </div>
     <div style="height: 40px"></div>
-    <div class="info2">
-        <h3>Light & ImagExpo <span style="font-weight: lighter;">光影视界·图展专栏</span>
-        </h3>
-    </div>
     <div class="info whitetodark">
-        <h2 style="border-left: #083a7b solid 6px;padding-left: 6px;">光影之月·2025年5月精选图片</h2>
+        <h2 style="border-left: #083a7b solid 6px;padding-left: 6px;">2025年5月精选图片</h2>
         <div class="imgs">
             <img src="./imgs/testimg.png" />
         </div>
@@ -28,7 +24,7 @@
     <div class="botm">
         <div
             style="cursor: pointer;padding: 0 8px;margin-left: 10px;font-size: 16px;color: #515151;font-family: serif;">
-            <div style="line-height: 21px;margin: 0;">2025 © <span onclick="scrollToTop()" title="回到顶部">Light & ImagExpo 光影视界·图展</span></div>
+            <div style="line-height: 21px;margin: 0;">2025 © <span onclick="scrollToTop()" title="回到顶部">Light & ImagExpo</span></div>
         </div>
     </div>
 </body>
@@ -69,8 +65,8 @@
         font-size: 30px;
         top: 15px;
         /* top: 0; */
-        left: 50%; /* 水平居中关键 */
-        transform: translateX(-50%); /* 修正居中偏移 */
+        left: 50%;
+        transform: translateX(-50%);
         width: max-content;
         margin: 0 auto;
         display: flex;
@@ -246,16 +242,15 @@
             }
         });
 
-        // 为所有图片绑定事件（包括动态加载的图片）
         function bindImageEvents() {
             document.querySelectorAll('img').forEach(img => {
-                if (img.dataset.hasExifListener) return; // 避免重复绑定
+                if (img.dataset.hasExifListener) return;
 
                 img.addEventListener('mouseenter', handleImageHover);
                 img.addEventListener('mouseleave', () => {
                     exifTooltip.style.display = 'none';
                 });
-                img.dataset.hasExifListener = 'true'; // 标记已绑定
+                img.dataset.hasExifListener = 'true';
             });
         }
 
@@ -271,20 +266,17 @@
 
             try {
                 let tags;
-                const imgKey = img.src; // 使用图片URL作为缓存键
+                const imgKey = img.src;
 
-                // 检查缓存
                 if (exifCache.has(imgKey)) {
                     tags = exifCache.get(imgKey);
                 } else {
-                    // 从网络或本地加载图片数据
                     const response = await fetch(img.src);
                     const arrayBuffer = await response.arrayBuffer();
                     tags = ExifReader.load(arrayBuffer);
                     exifCache.set(imgKey, tags); // 存入缓存
                 }
 
-                // 渲染 EXIF 信息
                 renderExifTooltip(tags);
             } catch (error) {
                 // exifTooltip.innerHTML = '<div class="exif-error">无法读取EXIF数据</div>';
@@ -292,7 +284,6 @@
             }
         }
 
-        // 渲染 EXIF 信息到提示框
         function renderExifTooltip(tags) {
             vEXIF=tags;
             exifTooltip.innerHTML = `
@@ -343,14 +334,12 @@
         `;
         }
 
-        // 初始化绑定（静态图片）
         bindImageEvents();
 
-        // 动态图片监听（适用于异步加载的图片）
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.addedNodes) {
-                    bindImageEvents(); // 重新绑定新图片
+                    bindImageEvents();
                 }
             });
         });
