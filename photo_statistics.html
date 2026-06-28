@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>照片信息统计系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js">
+    </script>
+    <style>
+        /* ===== 全局样式 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: default;
+        }
+
+        body {
+            font-family: -apple-system, sans-serif;
+            background: #f0f4f8;
+            color: #1a2332;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .app {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #1a2332 0%, #2d3b52 100%);
+            color: #fff;
+            padding: 16px 28px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 24px;
+            box-shadow: 0 6px 20px rgba(26, 35, 50, 0.25);
+        }
+
+        .app-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .app-header h1 small {
+            font-size: 14px;
+            font-weight: 400;
+            opacity: 0.75;
+        }
+
+        .header-stats {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 14px;
+            background: rgba(212, 212, 212, 0.137);
+            padding: 8px 16px;
+            border-radius: 40px;
+            border: rgb(211, 211, 211) 1.5px solid;
+        }
+
+        .header-stats .num {
+            font-weight: 700;
+            color: #0061a7;
+        }
+
+        .privacy-badge {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd966;
+            padding: 2px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin-bottom: 22px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1a2332;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .card-title .badge {
+            background: #e8edf5;
+            color: #2d3b52;
+            font-size: 13px;
+            padding: 0 12px;
+            border-radius: 20px;
+            line-height: 26px;
+        }
+
+        .add-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #eef2f7;
+            color: #1a2332;
+        }
+
+        /* .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10);
+        } */
+
+        .btn-primary {
+            background: #2d3b52;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #1a2332;
+        }
+
+        .btn-success {
+            background: #1e7b4a;
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: #15603a;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: #787878;
+            padding: 0 4px;
+            font-size: 18px;
+            line-height: 1;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            transition: color 0.2s;
+        }
+
+        .btn-danger:hover {
+            color: #7a0400;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid #cbd5e0;
+        }
+
+        .btn-outline:hover {
+            border-color: #2d3b52;
+            background: #f7f9fc;
+        }
+
+        .btn-sm {
+            color: #721c24
+        }
+
+        .file-list {
+            display: flex;
+            gap: 4px;
+            max-height: 240px;
+            overflow-y: auto;
+            padding-right: 4px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .file-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .file-list::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 12px;
+            background: #edf1f7;
+            border-radius: 8px;
+            font-size: 12px;
+            flex-wrap: wrap;
+            gap: 4px;
+            width: 14rem;
+        }
+
+        .file-item .info {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-item .info .name {
+            font-weight: 500;
+            word-break: break-all;
+            white-space: normal;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-item .info .status-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .file-item .info .status-icon.loading {
+            color: #856404;
+        }
+
+        .file-item .info .status-icon.done {
+            color: #155724;
+        }
+
+        .file-item .info .status-icon.error {
+            color: #721c24;
+        }
+
+        .file-item .actions {
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
+        .empty-hint {
+            color: #a0b3cc;
+            font-size: 13px;
+            padding-left: 10px;
+            text-align: center;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 14px 20px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 15px;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #dadada;
+            cursor: pointer;
+            user-select: none;
+            font-weight: bolder;
+            color: #808080;
+        }
+
+        .option-item input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            accent-color: #003489;
+            cursor: pointer;
+        }
+
+        .option-item input:checked+span {
+            color: #002767;
+        }
+
+        .select-all-btn {
+            margin-left: 1rem;
+            font-size: 14px;
+            padding: 3px 16px;
+            border: 1px solid #cbd5e0;
+            border-radius: 20px;
+            background: #f6f9fd;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .select-all-btn:hover {
+            background: #f0f4f8;
+            border-color: #2d3b52;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+            gap: 22px;
+            margin-top: 4px;
+        }
+
+        .chart-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 18px 14px;
+            border: 1px solid #e8edf5;
+        }
+
+        .chart-card .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .chart-card .chart-header .chart-label {
+            font-weight: 600;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chart-card .chart-header .chart-label .tag {
+            font-size: 12px;
+            font-weight: 400;
+            color: #7a8ba3;
+            background: #eef2f7;
+            padding: 0 10px;
+            border-radius: 12px;
+            line-height: 22px;
+        }
+
+        .chart-card .chart-header .switch-btn {
+            padding: 3px 14px;
+            border: 1px solid #cbd5e0;
+            border-radius: 20px;
+            background: #fff;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .chart-card .chart-header .switch-btn:hover {
+            background: #f0f4f8;
+        }
+
+        .chart-card .chart-container {
+            width: 100%;
+            height: 280px;
+        }
+
+        .no-data-hint {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0b3cc;
+        }
+
+        .no-data-hint .icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 12px;
+            }
+
+            .app-header {
+                padding: 14px 16px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .app-header h1 {
+                font-size: 20px;
+                justify-content: center;
+            }
+
+            .header-stats {
+                justify-content: center;
+                font-size: 13px;
+                padding: 4px 12px;
+                flex-wrap: wrap;
+            }
+
+            .card {
+                padding: 14px 16px;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .file-item .info .name {
+                max-width: 100%;
+            }
+
+            .options-grid {
+                gap: 10px 14px;
+            }
+
+            .chart-card .chart-container {
+                height: 220px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .file-item .info .name {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app" id="app">
+        <!-- 头部 -->
+        <header class="app-header">
+            <h1>照片信息统计系统</h1>
+        </header>
+
+        <!-- 添加区 -->
+        <section class="card" id="addSection">
+            <div class="add-actions">
+                <button class="btn btn-primary" id="addImagesBtn">🖼️ 添加图片</button>
+                <button class="btn btn-success" id="addFolderBtn">📁 添加文件夹</button>
+                <div style="font-size:12px; color:#a5a5a5; background:#f7f7f7; padding:4px 10px; border-radius:8px;">
+                    同一文件名优先保留NEF格式，等效焦距识别 DX / EF-S / APS-C 等标记×1.5</div>
+                <div class="header-stats" style="margin-left:auto;">
+                    <span class="num" id="totalCount">0</span>
+                    <span> / <span class="num" id="analyzedCount">0</span></span>
+                </div>
+                <button class="btn btn-outline btn-sm" id="clearAllBtn">🗑️ 清空</button>
+            </div>
+            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.nef" multiple style="display:none" />
+            <input type="file" id="folderInput" webkitdirectory multiple style="display:none" />
+            <div class="file-list" id="fileList">
+            </div>
+
+        </section>
+
+        <!-- 选项区 -->
+        <section class="card" id="optionsSection">
+            <div class="card-title">
+                维度选项
+                <button class="select-all-btn" id="selectAllBtn">全选</button>
+                <button class="select-all-btn" id="deselectAllBtn" style="margin-left:6px;">取消全选</button>
+            </div>
+            <div class="options-grid" id="optionsGrid"></div>
+        </section>
+
+        <!-- 图表区 -->
+        <section class="card" id="chartsSection">
+            <div class="card-title">统计结果</div>
+            <div class="charts-grid" id="chartsGrid">
+                <div class="no-data-hint" id="noDataHint">
+                    请添加图片并勾选维度
+                </div>
+            </div>
+        </section>
+    </div>
+    <div style="text-align: center;color: #aaaaaa;font-family: serif;font-size: 0.6rem;">FRK.CODE © 2026</div>
+
+    <script>
+        // ================================================================
+        //  1. 配置 & 状态
+        // ================================================================
+        const STAT_DEFS = {
+            make: { label: '品牌', icon: '' },
+            model: { label: '型号', icon: '' },
+            lens: { label: '镜头', icon: '' },
+            iso: { label: '感光度·ISO', icon: '' },
+            focalLength: { label: '焦距·mm', icon: '' },
+            focalLengthEquiv: { label: '等效焦距·mm', icon: '' },
+            aperture: { label: '光圈·f', icon: '' },
+            shutterSpeed: { label: '快门速度·s', icon: '' }
+        };
+
+        const state = {
+            photos: [],
+            selected: {},
+            chartTypes: {},
+            chartInstances: {}
+        };
+
+        // 默认全选
+        for (const k of Object.keys(STAT_DEFS)) {
+            state.selected[k] = true;
+        }
+
+        // ================================================================
+        //  2. DOM 引用
+        // ================================================================
+        const $ = id => document.getElementById(id);
+        const fileInput = $('fileInput');
+        const folderInput = $('folderInput');
+        const fileListEl = $('fileList');
+        const optionsGrid = $('optionsGrid');
+        const chartsGrid = $('chartsGrid');
+        const noDataHint = $('noDataHint');
+        const totalCountEl = $('totalCount');
+        const analyzedCountEl = $('analyzedCount');
+
+        // ================================================================
+        //  3. 工具函数
+        // ================================================================
+        function formatShutter(v) {
+            if (v == null) return '未知';
+            if (Array.isArray(v)) {
+                const [n, d] = v;
+                if (d === 0) return '未知';
+                if (n === 1) return `1/${d}`;
+                return `${n}/${d}`;
+            }
+            if (typeof v === 'number') {
+                if (v >= 1) return `${v}s`;
+                const d = Math.round(1 / v);
+                return `1/${d}`;
+            }
+            return String(v);
+        }
+
+        // 计算等效焦距（自动识别画幅）
+        function calcEquivFocalLength(exif) {
+            if (!exif) return null;
+            // 优先使用 EXIF 中的 35mm 等效焦距
+            if (exif.FocalLengthIn35mmFilm) {
+                return Math.round(exif.FocalLengthIn35mmFilm);
+            }
+            // 如果有实际焦距，根据镜头/相机信息判断倍率
+            if (exif.FocalLength) {
+                const makeModel = ((exif.Make || '') + ' ' + (exif.Model || '')).toUpperCase();
+                const lensModel = (exif.LensModel || '').toUpperCase();
+                const text = makeModel + ' ' + lensModel;
+                let cropFactor = 1.0;
+                // 检测半画幅标记
+                if (text.includes('DX') || text.includes('EF-S') || text.includes('APS-C') || text.includes('NIKON DX')) {
+                    cropFactor = 1.5;
+                } else if (text.includes('CANON EF-S')) {
+                    cropFactor = 1.6;
+                } else if (text.includes('M4/3') || text.includes('MICRO FOUR THIRDS')) {
+                    cropFactor = 2.0;
+                } else if (text.includes('FUJIFILM X') || text.includes('FUJI X')) {
+                    cropFactor = 1.5;
+                } else if (text.includes('SONY E') && !text.includes('FE')) {
+                    cropFactor = 1.5;
+                }
+                // 也可以根据相机型号识别（例如 Nikon Dxxxx 等，但上面的关键字已覆盖）
+                return Math.round(exif.FocalLength * cropFactor);
+            }
+            return null;
+        }
+
+        function extractStat(photo, key) {
+            if (photo.status !== 'done' || !photo.exif) return '未知';
+            try {
+                const e = photo.exif;
+                switch (key) {
+                    case 'make':
+                        return (e.Make || '').trim() || '未知';
+                    case 'model':
+                        return (e.Model || '').trim() || '未知';
+                    case 'lens':
+                        return (e.LensModel || '').trim() || '未知';
+                    case 'iso':
+                        return e.ISO != null ? String(e.ISO) : '未知';
+                    case 'shutterSpeed':
+                        return formatShutter(e.ExposureTime);
+                    case 'focalLength':
+                        if (e.FocalLength != null) {
+                            const fl = typeof e.FocalLength === 'number' ? Math.round(e.FocalLength) : String(e
+                                .FocalLength);
+                            return `${fl}mm`;
+                        }
+                        return '未知';
+                    case 'aperture':
+                        if (e.FNumber != null) {
+                            const f = typeof e.FNumber === 'number' ? Number(e.FNumber.toFixed(1)) : String(e.FNumber);
+                            return `f/${f}`;
+                        }
+                        return '未知';
+                    case 'focalLengthEquiv': {
+                        const equiv = calcEquivFocalLength(e);
+                        if (equiv) return `${equiv}mm`;
+                        return '未知';
+                    }
+                    default:
+                        return '未知';
+                }
+            } catch (_) { return '未知'; }
+        }
+
+        function genId() { return Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6); }
+
+        function isSupported(f) { return /\.(jpg|jpeg|png|nef)$/i.test(f.name); }
+
+        function getBase(f) {
+            const n = f.name;
+            const i = n.lastIndexOf('.');
+            return i === -1 ? n : n.substring(0, i).toLowerCase();
+        }
+
+        function getExt(f) {
+            const n = f.name;
+            const i = n.lastIndexOf('.');
+            return i === -1 ? '' : n.substring(i + 1).toLowerCase();
+        }
+
+        function isRaw(f) {
+            return getExt(f) === 'nef';
+        }
+
+        function escapeHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        // ================================================================
+        //  4. 添加文件（优先 RAW，智能去重）
+        // ================================================================
+        async function addFiles(fileList) {
+            if (typeof exifr === 'undefined') {
+                alert('照片解析库 (exifr) 未加载，请刷新页面或检查网络。');
+                return;
+            }
+
+            const files = Array.from(fileList).filter(isSupported);
+            if (files.length === 0) {
+                alert('未找到支持的图片（JPG / PNG / NEF）');
+                return;
+            }
+
+            // 按基名分组，每组选一个最优（优先 NEF）
+            const groupMap = new Map();
+            for (const f of files) {
+                const base = getBase(f);
+                if (!groupMap.has(base)) {
+                    groupMap.set(base, []);
+                }
+                groupMap.get(base).push(f);
+            }
+
+            const toAdd = [];
+            for (const [base, group] of groupMap) {
+                let selected = group.find(f => isRaw(f));
+                if (!selected) selected = group[0];
+                toAdd.push(selected);
+            }
+
+            // 与现有照片去重并替换（优先 RAW）
+            const existingMap = new Map();
+            for (const p of state.photos) {
+                existingMap.set(p.baseName, p);
+            }
+
+            const toRemoveIds = [];
+            for (const newFile of toAdd) {
+                const base = getBase(newFile);
+                const existing = existingMap.get(base);
+                if (existing) {
+                    const oldExt = getExt(existing.file);
+                    const newExt = getExt(newFile);
+                    if (oldExt !== 'nef' && newExt === 'nef') {
+                        toRemoveIds.push(existing.id);
+                        existingMap.delete(base);
+                    } else {
+                        existingMap.set(base, existing);
+                    }
+                }
+            }
+
+            if (toRemoveIds.length > 0) {
+                state.photos = state.photos.filter(p => !toRemoveIds.includes(p.id));
+            }
+
+            const finalNewFiles = toAdd.filter(f => !existingMap.has(getBase(f)));
+            if (finalNewFiles.length === 0) {
+                alert('没有新的图片需要添加（所有文件已存在或已保留更优格式）。');
+                return;
+            }
+
+            const newPhotos = finalNewFiles.map(f => ({
+                id: genId(),
+                name: f.name,
+                baseName: getBase(f),
+                ext: getExt(f),
+                file: f,
+                exif: null,
+                status: 'loading',
+                errorMsg: null
+            }));
+            state.photos.push(...newPhotos);
+            renderFileList();
+            updateStats();
+
+            for (const p of newPhotos) {
+                try {
+                    const exif = await Promise.race([
+                        exifr.parse(p.file, {
+                            pick: ['Make', 'Model', 'LensModel', 'ISO', 'ExposureTime', 'FocalLength', 'FNumber',
+                                'FocalLengthIn35mmFilm'
+                            ],
+                            tiff: true,
+                            ifd1: true
+                        }),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('读取超时 (10s)')), 10000))
+                    ]);
+                    p.exif = exif || {};
+                    p.status = 'done';
+                } catch (err) {
+                    p.exif = {};
+                    p.status = 'error';
+                    p.errorMsg = err.message || '解析异常';
+                    console.warn(`解析失败 ${p.name}:`, err);
+                }
+                renderFileList();
+                updateStats();
+            }
+            renderCharts();
+        }
+
+        // ================================================================
+        //  5. 移除 & 清空
+        // ================================================================
+        function removePhoto(id) {
+            const targetId = String(id);
+            const index = state.photos.findIndex(p => String(p.id) === targetId);
+            if (index !== -1) {
+                state.photos.splice(index, 1);
+                renderFileList();
+                updateStats();
+                renderCharts();
+            } else {
+                console.warn('未找到要删除的图片，id:', targetId);
+            }
+        }
+
+        function clearAll() {
+            if (!state.photos.length) return;
+            if (!confirm(`确定清空全部 ${state.photos.length} 张图片？`)) return;
+            state.photos = [];
+            for (const k of Object.keys(state.chartInstances)) {
+                state.chartInstances[k].dispose();
+                delete state.chartInstances[k];
+            }
+            renderFileList();
+            updateStats();
+            renderCharts();
+        }
+
+        // ================================================================
+        //  6. 渲染：文件列表（换行 + ✕）
+        // ================================================================
+        function renderFileList() {
+            if (!state.photos.length) {
+                fileListEl.innerHTML = `<div class="empty-hint">暂无图片</div>`;
+                return;
+            }
+            let html = '';
+            for (const p of state.photos) {
+                const icon = p.status === 'loading' ? '⏳' : p.status === 'done' ? '' : '❌';
+                const title = p.status === 'error' ? `错误: ${p.errorMsg || '未知'}` : '';
+                html += `
+            <div class="file-item" data-id="${p.id}">
+                <div class="info">
+                    <span class="status-icon ${p.status}" title="${title}">${icon}</span>
+                    <span class="name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-danger" data-id="${p.id}" title="移除">✕</button>
+                </div>
+            </div>
+        `;
+            }
+            fileListEl.innerHTML = html;
+            // 绑定事件
+            fileListEl.querySelectorAll('.btn-danger[data-id]').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const id = this.dataset.id;
+                    if (id) removePhoto(id);
+                });
+            });
+        }
+
+        // ================================================================
+        //  7. 渲染：选项区（默认全选 + 全选按钮）
+        // ================================================================
+        function renderOptions() {
+            let html = '';
+            for (const [key, def] of Object.entries(STAT_DEFS)) {
+                const checked = state.selected[key] ? 'checked' : '';
+                html += `
+                    <label class="option-item">
+                        <input type="checkbox" data-key="${key}" ${checked} />
+                        <span>${def.icon} ${def.label}</span>
+                    </label>
+                `;
+            }
+            optionsGrid.innerHTML = html;
+            optionsGrid.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const key = cb.dataset.key;
+                    state.selected[key] = cb.checked;
+                    renderCharts();
+                });
+            });
+        }
+
+        function setAll(value) {
+            for (const k of Object.keys(STAT_DEFS)) state.selected[k] = value;
+            const cbs = optionsGrid.querySelectorAll('input[type="checkbox"]');
+            cbs.forEach(cb => cb.checked = value);
+            renderCharts();
+        }
+
+        // ================================================================
+        //  8. 图表渲染
+        // ================================================================
+
+        function getStatistics(key) {
+            const vals = [];
+            for (const p of state.photos) {
+                if (p.status === 'done') {
+                    vals.push(extractStat(p, key));
+                }
+            }
+            const map = new Map();
+            for (const v of vals) {
+                map.set(v, (map.get(v) || 0) + 1);
+            }
+            return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+        }
+
+        function updateChartData(key) {
+            const instance = state.chartInstances[key];
+            if (!instance) return;
+
+            const data = getStatistics(key);
+            const chartType = state.chartTypes[key] || 'bar';
+            const def = STAT_DEFS[key];
+            const categories = data.map(d => d[0]);
+            const values = data.map(d => d[1]);
+
+            let option;
+            if (chartType === 'bar') {
+                option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'shadow' },
+                        formatter: params =>
+                            `<strong>${params[0].name}</strong><br/>数量：<strong>${params[0].value}</strong>`
+                    },
+                    grid: { left: '6%', right: '6%', top: '10%', bottom: '16%', containLabel: true },
+                    xAxis: {
+                        type: 'category',
+                        data: categories,
+                        axisLabel: {
+                            rotate: categories.length > 6 ? 30 : 0, fontSize: 12, interval: 0,
+                            overflow: 'break', width: 80
+                        },
+                        axisLine: { lineStyle: { color: '#000000' } }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '数量',
+                        nameTextStyle: { fontSize: 10, color: '#7a8ba3' },
+                        splitLine: { lineStyle: { color: '#eef2f7', type: 'dashed' } }
+                    },
+                    color: [ '#004080', '#965000', '#0099d4', '#47ab26', '#9738ff', '#fff100', '#bb008b','#597182', "#a09d00", "#ffaaaa"],
+                    series: [{
+                        type: 'bar',
+                        data: values,
+                        barWidth: '50%',
+                        colorBy: 'color',
+                        itemStyle: {
+                            // color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            //     { offset: 0, color: '#004080' }, { offset: 1, color: '#5882B2' }
+                            // ]),
+                            borderRadius: [4, 4, 0, 0]
+                        },
+                        label: { show: values.length <= 20, position: 'top', fontSize: 12, color: '#1a2132' }
+                    }],
+                    animationDuration: 600
+                };
+            } else {
+                const pieData = data.map(([name, value]) => ({ name, value }));
+                option = {
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a}<br/>{b} : <strong>{c}</strong> ({d}%)'
+                    },
+                    legend: {
+                        orient: 'vertical',
+                        right: '5%',
+                        top: 'center',
+                        itemWidth: 14,
+                        itemHeight: 14,
+                        textStyle: { fontSize: 13 },
+                        type: 'scroll',
+                        pageIconSize: 10
+                    },
+                    series: [{
+                        name: def.label,
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        center: ['45%', '50%'],
+                        avoidLabelOverlap: true,
+                        itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
+                        label: { show: true, formatter: '{b}\n{d}%', fontSize: 12, lineHeight: 18 },
+                        labelLine: { length: 12, length2: 16 },
+                        emphasis: {
+                            itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' },
+                            label: { fontSize: 14, fontWeight: 'bold' }
+                        },
+                        data: pieData,
+                        animationDuration: 600
+                    }]
+                };
+            }
+            instance.setOption(option, true);
+            instance.resize();
+        }
+
+        function renderCharts() {
+            const grid = chartsGrid;
+
+            // 销毁所有旧实例
+            for (const key of Object.keys(state.chartInstances)) {
+                state.chartInstances[key].dispose();
+                delete state.chartInstances[key];
+            }
+
+            while (grid.firstChild) {
+                grid.removeChild(grid.firstChild);
+            }
+            grid.appendChild(noDataHint);
+
+            // 如果没有任何图片，直接显示提示
+            if (state.photos.length === 0) {
+                noDataHint.classList.remove('hidden');
+                noDataHint.innerHTML = `请添加图片`;
+                return;
+            }
+
+            const donePhotos = state.photos.filter(p => p.status === 'done');
+            if (donePhotos.length === 0) {
+                noDataHint.classList.remove('hidden');
+                noDataHint.innerHTML = `暂无已分析的图片，请添加图片并等待分析完成`;
+                return;
+            }
+
+            const selectedKeys = Object.keys(state.selected).filter(k => state.selected[k]);
+            if (selectedKeys.length === 0) {
+                noDataHint.classList.remove('hidden');
+                noDataHint.innerHTML = `请勾选需要统计的参数`;
+                return;
+            }
+            noDataHint.classList.add('hidden');
+
+            for (const key of selectedKeys) {
+                const def = STAT_DEFS[key];
+                const data = getStatistics(key);
+                if (data.length === 0) continue;
+
+                const card = document.createElement('div');
+                card.className = 'chart-card';
+                card.dataset.key = key;
+
+                const chartType = state.chartTypes[key] || 'bar';
+                card.innerHTML = `
+                    <div class="chart-header">
+                        <div class="chart-label">
+                            ${def.icon} ${def.label}
+                            <span class="tag">${data.length} 类</span>
+                        </div>
+                        <button class="switch-btn" data-key="${key}">
+                            ${chartType === 'bar' ? '饼图' : '柱状图'}
+                        </button>
+                    </div>
+                    <div class="chart-container" id="chart_${key}"></div>
+                `;
+                grid.appendChild(card);
+
+                const container = card.querySelector('.chart-container');
+                const instance = echarts.init(container);
+                state.chartInstances[key] = instance;
+
+                card.querySelector('.switch-btn').addEventListener('click', () => {
+                    state.chartTypes[key] = (state.chartTypes[key] || 'bar') === 'bar' ? 'pie' : 'bar';
+                    const btn = card.querySelector('.switch-btn');
+                    btn.textContent = state.chartTypes[key] === 'bar' ? '饼图' : '柱状图';
+                    updateChartData(key);
+                });
+
+                updateChartData(key);
+            }
+
+            if (grid.querySelectorAll('.chart-card').length === 0) {
+                noDataHint.classList.remove('hidden');
+                noDataHint.innerHTML = `选中的维度暂无有效数据`;
+            }
+        }
+
+        // ================================================================
+        //  9. 更新头部统计
+        // ================================================================
+        function updateStats() {
+            totalCountEl.textContent = state.photos.length;
+            analyzedCountEl.textContent = state.photos.filter(p => p.status === 'done').length;
+        }
+
+        // ================================================================
+        //  10. 初始化 & 事件绑定
+        // ================================================================
+        function init() {
+            if (typeof exifr === 'undefined') {
+                document.getElementById('addSection').insertAdjacentHTML('afterbegin',
+                    `<div class="warning-box">⚠️ 照片解析库 (exifr) 加载失败，请 <a href="javascript:location.reload()">刷新页面</a> 或检查网络后重试。</div>`
+                );
+            }
+
+            renderOptions();
+            renderFileList();
+            updateStats();
+            renderCharts();
+
+            $('selectAllBtn').addEventListener('click', () => setAll(true));
+            $('deselectAllBtn').addEventListener('click', () => setAll(false));
+
+            $('addImagesBtn').addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', e => {
+                if (e.target.files.length) {
+                    addFiles(e.target.files);
+                    e.target.value = '';
+                }
+            });
+
+            $('addFolderBtn').addEventListener('click', () => folderInput.click());
+            folderInput.addEventListener('change', e => {
+                if (e.target.files.length) {
+                    addFiles(e.target.files);
+                    e.target.value = '';
+                }
+            });
+
+            $('clearAllBtn').addEventListener('click', clearAll);
+
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    for (const key of Object.keys(state.chartInstances)) {
+                        state.chartInstances[key].resize();
+                    }
+                }, 200);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+
+</html>
